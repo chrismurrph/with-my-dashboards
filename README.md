@@ -1,4 +1,4 @@
-# mdserve
+# with-my-dashboards (WMD)
 
 A local markdown viewer and control panel, in one [babashka](https://babashka.org)
 file. It is built for working alongside a coding agent: the agent writes a doc,
@@ -35,15 +35,15 @@ The story behind it: [Workflow Ergonomics with AI](https://pangglow.com/files/bl
   tested on a real Mac.
 - [babashka](https://babashka.org) (`bb`). `install.sh` installs it for you if
   it's missing (into `~/.local/bin`, no sudo).
-- Google Chrome or Chromium. mdserve runs it with its own profile, so your
+- Google Chrome or Chromium. WMD runs it with its own profile, so your
   normal browser is untouched.
 - `lsof`, so that ■ Stop can also end a server that was started from a terminal.
 
 ## Install
 
 ```bash
-git clone https://github.com/chrismurrph/mdserve-starter ~/code/mdserve
-cd ~/code/mdserve
+git clone https://github.com/chrismurrph/with-my-dashboards ~/code/wmd
+cd ~/code/wmd
 ./install.sh
 ```
 
@@ -54,8 +54,10 @@ everything working before you add your own.
 Then start it from the workspace you want the panel on:
 
 ```bash
-./mdserve.sh
+./wmd.sh
 ```
+
+(`./mdserve.sh`, from when WMD was called mdserve, still works.)
 
 The windows open. Move each project's window to its workspace. Neither Linux nor
 macOS lets a program choose a window's workspace, so this is done by hand after

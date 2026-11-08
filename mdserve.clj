@@ -201,8 +201,8 @@
              "li.entry .term code{background:none;padding:0;color:var(--fg);font-weight:600;font-size:.95em}"
              "li.entry .desc{color:var(--fg-soft)}"
              "table{border-collapse:collapse;display:block;overflow:auto;width:max-content;max-width:100%}"
-             "th,td{border:1px solid var(--line);padding:5px 9px;max-width:34rem;overflow-wrap:anywhere;vertical-align:top}"
-             "th code,td code{white-space:nowrap;overflow-wrap:normal}"
+             "th,td{border:1px solid var(--line);padding:5px 9px;max-width:34rem;overflow-wrap:break-word;vertical-align:top}"
+             "th code,td code{white-space:normal;overflow-wrap:break-word}"
              "th{font-weight:600}"
              "thead th{border-bottom-width:2px}"
              "tr:nth-child(2n) td{background:var(--pre-bg)}"
@@ -751,18 +751,23 @@
   "open-url! with --remote-debugging-port. Chrome only honours that flag on the
    process that STARTS the profile's browser instance — later invocations just
    message the running one — so only the first open of a startup uses this.
-   Falls back to open-url! under MDSERVE_OPENER or when
+   Takes several urls so a whole window's tabs go in that one launch: Chrome
+   opens them as one window. Sending them one by one afterwards races Chrome's
+   startup, and some can land in a stray extra window.
+   Falls back to open-url! per url under MDSERVE_OPENER or when
    devtools-port is 0."
-  [url]
+  [& urls]
   (if (or opener-str (zero? devtools-port))
-    (open-url! url)
+    (doseq [[i url] (map-indexed vector urls)]
+      (when (pos? i) (Thread/sleep 400))
+      (open-url! url))
     (do
       (try
-        (p/process (conj (into browser-cmd
+        (p/process (into (into browser-cmd
                                [(str "--user-data-dir=" profile)
                                 "--no-first-run" "--no-default-browser-check"
                                 (str "--remote-debugging-port=" devtools-port)])
-                         url)
+                         urls)
                    {:out (io/file "/dev/null") :err (io/file "/dev/null")})
         (catch Exception _ nil))
       nil)))
@@ -1692,8 +1697,10 @@
 (def wide-table-mitigation-css
   "Page-level override applied only when a doc has over-wide cells: lets the
    table shrink to the page and cells wrap, instead of one endless sideways
-   scroll."
-  "<style>table{display:table;width:auto;max-width:100%}td,th{overflow-wrap:anywhere}</style>")
+   scroll. Code wraps too here: left on one line, a column of long names keeps
+   its full width and the text columns are squeezed to one letter each.
+   Headers break only between words."
+  "<style>table{display:table;width:auto;max-width:100%}td{overflow-wrap:anywhere}th{overflow-wrap:break-word}th code,td code{white-space:normal;overflow-wrap:anywhere}</style>")
 
 (defn health-banner-html
   "Banner HTML for check-doc-health-inline ISSUES, or \"\" when the doc is healthy.
@@ -2571,19 +2578,25 @@
    of tabs: the first group (the panel's) starts the browser, and every other
    group opens as its own window through open-window-with!.
 
-   The very first url must go through open-url-with-debug-port!: Chrome honours
+   The first window's urls must all go through open-url-with-debug-port!, in
+   one launch (see its docstring for the race that avoids): Chrome honours
    --remote-debugging-port only on the process that STARTS the profile, and
    open-window-with! does not pass it. That first window therefore carries no
    --class, which only costs it a GNOME auto-move rule it never had."
   [groups]
   (let [[[_ first-tabs] & more] groups]
-    (open-url-with-debug-port! (tab->url (first first-tabs)))
-    ;; brief pause so the first launch establishes the browser profile before
-    ;; the next ones arrive as tabs (rather than racing into a separate window).
-    (Thread/sleep 600)
-    (doseq [t (rest first-tabs)]
-      (open-url! (tab->url t))
-      (Thread/sleep 400))
+    ;; The whole first window in the one launch that starts the browser.
+    (apply open-url-with-debug-port! (map tab->url first-tabs))
+    ;; Let that launch establish the browser before the other windows arrive:
+    ;; wait for its DevTools port to answer (up to ~10s), or a fixed pause when
+    ;; there is no port to ask.
+    (if (or opener-str (zero? devtools-port))
+      (Thread/sleep 600)
+      (loop [n 0]
+        (when (and (< n 50) (nil? (page-targets)))
+          (Thread/sleep 200)
+          (recur (inc n)))))
+    (Thread/sleep 400)
     (doseq [[cls ts] more]
       (open-window-with! cls (mapv tab->url ts))
       (Thread/sleep 800))))

@@ -1,6 +1,6 @@
 #!/usr/bin/env bb
 ;; md_lint — lint markdown for the seven failure modes that look fine in the
-;; source and only break when mdserve (markdown-clj 1.12.10) renders them, plus
+;; source and only break when WMD (markdown-clj 1.12.10) renders them, plus
 ;; safe-edit helpers that refuse to write on an unexpected match count.
 ;;
 ;; Lint:  bb md_lint.bb FILE-OR-DIR ...        (exit 1 on hard errors, 0 else)
@@ -231,7 +231,7 @@
 (defn heading-slugs
   "Set of anchor slugs the rendered document's headings carry, from ATX (#)
    headings outside code fences. Duplicate slugs get -1, -2, ... suffixes in
-   document order, matching mdserve's anchorize-headings. Setext (underlined)
+   document order, matching WMD's anchorize-headings. Setext (underlined)
    headings are not handled — the corpus does not use them."
   [body]
   (let [lines (str/split-lines body)]

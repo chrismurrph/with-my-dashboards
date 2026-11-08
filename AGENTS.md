@@ -1,6 +1,6 @@
-# mdserve: notes for a coding agent
+# WMD: notes for a coding agent
 
-You are probably reading this because the person you work with runs mdserve, a
+You are probably reading this because the person you work with runs WMD, a
 local markdown viewer on `http://localhost:7000` (the port is in their config).
 It has two uses for you: **showing them docs**, and **being changed** when they
 ask. Each has its own half below.
@@ -56,7 +56,7 @@ doc.
 | `/view/<abs-path>` | a file or folder, rendered, without opening anything |
 | `/commands/<project>/status` | JSON: each command button's state |
 | `/tab-show/<abs-path>` | put a doc on the tablet reading list, if one is configured |
-| `/sessions/<n>` | workspace n's Claude Code sessions; `/sessions/rows?ws=<n>` is its 30-second poll (not logged); mdserve also refreshes every 3 minutes on its own |
+| `/sessions/<n>` | workspace n's Claude Code sessions; `/sessions/rows?ws=<n>` is its 30-second poll (not logged); WMD also refreshes every 3 minutes on its own |
 | `/sessions/find?q=<words>` | search the session history (every word, any case); `&format=text` for a shell, as `session-find.sh` does |
 | `/tablet/off`, `/tablet/on` (POST), `/tablet/status` | stop or start the tablet server without a restart; off survives restarts (`tablet.edn.off`) |
 
@@ -94,7 +94,7 @@ Everything is in **`mdserve.clj`**, one babashka script, top to bottom:
 
 ### How the windows work
 
-- mdserve launches Chrome with its own profile and `--remote-debugging-port`
+- WMD launches Chrome with its own profile and `--remote-debugging-port`
   (`devtools-port`). Everything about tabs goes through that port: listing
   them, reloading one, and opening a new tab in a chosen window.
 - **Chrome only honours the DevTools flag on the launch that starts the
@@ -105,7 +105,7 @@ Everything is in **`mdserve.clj`**, one babashka script, top to bottom:
   the last-active window, and Linux compositors refuse to focus a window on
   another workspace, so anything based on focus fails there.
 - **Windows are never recorded.** DevTools does not say which window a tab is
-  in, so mdserve works it out from what each tab belongs to (`tab-project`):
+  in, so WMD works it out from what each tab belongs to (`tab-project`):
   a project's dashboard, or a file under its folder.
 - **No program can put a window on a given workspace** on GNOME or KDE under
   Wayland, or in macOS Spaces. The `:workspace` numbers in the config are labels the person
@@ -120,7 +120,7 @@ the common ones; all are optional.
 
 | Key | Default | What |
 |---|---|---|
-| `:port` | 7000 | where mdserve listens (`MDSERVE_PORT`) |
+| `:port` | 7000 | where WMD listens (`MDSERVE_PORT`) |
 | `:browser` | `google-chrome`; on macOS, the program inside `Google Chrome.app` | browser command, flags allowed (`MDSERVE_BROWSER`); a path with spaces, or a vector of words |
 | `:profile` | `~/.local/share/mdserve-starter/browser` | the browser's own profile (`MDSERVE_PROFILE`) |
 | `:devtools-port` | 9222 | `0` turns placement and Remember Tabs off (`MDSERVE_DEVTOOLS_PORT`) |
@@ -171,7 +171,7 @@ most recently ended sessions from the history (`:retired-count`, 25).
 - **Stop a test instance by its pid,** found with `ps -eo pid,cmd`. Never
   `pkill -f mdserve`: the pattern also matches their own instance, and your
   shell.
-- **Changes are inert until they restart mdserve.** Say so; never imply an edit
+- **Changes are inert until they restart WMD.** Say so; never imply an edit
   is live. `curl -s localhost:7000/version` shows whether the running copy is
   the file on disk.
 - **After every edit, check it still parses:**

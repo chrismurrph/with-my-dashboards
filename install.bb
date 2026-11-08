@@ -26,7 +26,7 @@
        (catch Exception _ true)))
 
 (defn free-port
-  "The first port from start up that nothing is listening on. Another mdserve
+  "The first port from start up that nothing is listening on. Another WMD
    may already be running on this machine, and two can't share a port."
   [start]
   (first (filter port-free? (iterate inc start))))
@@ -93,14 +93,14 @@
     {:name nm :dir dir :workspace ws :commands []}))
 
 (defn config-text [{:keys [port browser profile devtools-port projects panel-ws tablet-port path]}]
-  (str ";; mdserve config — written by install.bb, meant to be edited by hand.\n"
-       ";; Port, browser and projects are read at startup: restart mdserve after\n"
+  (str ";; WMD config — written by install.bb, meant to be edited by hand.\n"
+       ";; Port, browser and projects are read at startup: restart WMD after\n"
        ";; changing them. :commands are re-read on every dashboard load.\n"
        "{:port " port "\n"
        " :browser " (edn-str browser) "\n"
        "\n"
-       " ;; The browser's own profile, and the DevTools port mdserve drives it\n"
-       " ;; through. Both must differ from any other mdserve on this machine.\n"
+       " ;; The browser's own profile, and the DevTools port WMD drives it\n"
+       " ;; through. Both must differ from any other WMD on this machine.\n"
        " :profile " (edn-str (tilde profile)) "\n"
        " :devtools-port " devtools-port "\n"
        "\n"
@@ -128,11 +128,11 @@
        " ;; :terminal-run \"gnome-terminal --working-directory={dir} -- {cmd}\"\n"
        "}\n"))
 
-(println "mdserve setup — writes" config-file)
+(println "WMD setup — writes" config-file)
 (println)
 
 (when-not (or (on-path? "bb") (.canExecute (io/file home ".local/bin/bb")))
-  (println "Note: babashka (bb) is not on PATH, and mdserve.sh needs it there."))
+  (println "Note: babashka (bb) is not on PATH, and wmd.sh needs it there."))
 
 (def browser
   (let [found (or (first (filter on-path? ["google-chrome" "google-chrome-stable" "chromium" "chromium-browser"]))
@@ -141,15 +141,15 @@
                                  (for [apps ["/Applications" (str home "/Applications")]]
                                    (str apps "/Google Chrome.app/Contents/MacOS/Google Chrome")))))]
     (when-not found
-      (println "No Chrome or Chromium found (on PATH, or in Applications on a Mac). mdserve needs one of them."))
+      (println "No Chrome or Chromium found (on PATH, or in Applications on a Mac). WMD needs one of them."))
     (ask "Browser command" (or found "google-chrome"))))
 
-(def port (or (ask-int "Port for mdserve" (free-port 7000)) 7000))
+(def port (or (ask-int "Port for WMD" (free-port 7000)) 7000))
 
 (def devtools-port
   (let [p (free-port 9222)]
     (when-not (= p 9222)
-      (println (str "  (DevTools port 9222 is in use, so this mdserve's browser will use " p ")")))
+      (println (str "  (DevTools port 9222 is in use, so this WMD's browser will use " p ")")))
     p))
 
 (println)
@@ -194,8 +194,8 @@
   (println)
   (println "Wrote" config-file)
   (println)
-  (println "Start mdserve on the workspace you want the panel on:")
-  (println (str "  " repo "/mdserve.sh"))
+  (println "Start WMD on the workspace you want the panel on:")
+  (println (str "  " repo "/wmd.sh"))
   (when (or use-examples? (seq own-projects))
     (println)
     (println "Every window opens on whichever workspace is current: nothing on Linux")
